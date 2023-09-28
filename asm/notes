@@ -1,0 +1,6 @@
+build steps:
+	nasm -fbin boot.asm -o boot
+	masm -f elf aa.asm -o aa.o
+	i386-elf-gcc -ffreestanding -c cmain.c -o cmain.o
+	i386-elf-ld -Ttext 0x7e00 --oformat binary -o a.bin cmain.o aa.o
+	cat boot a.bin > main.bin

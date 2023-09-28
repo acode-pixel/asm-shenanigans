@@ -1,0 +1,4 @@
+%ifndef DISK_MAC
+	%define DISK_MAC
+	%include "disk.asm"
+%endif
