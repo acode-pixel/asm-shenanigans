@@ -2,7 +2,6 @@
 BITS 16
 %define STACK_ADDRESS 0x7c00
 %define VIDEO_MEM 0xa0000
-%define CMAIN 0x7e00
 
 setup_stack:
 	mov bp, STACK_ADDRESS
@@ -17,27 +16,34 @@ preload:
 
 pre:
 	nop
-	in al, 0xee
-	call check_a20
-	sti
-
-	mov dx, ax
-	call print_hex
-
 	mov ah, 0x00
-	mov al, 0x00
-	int 0x16
-
-	mov ah, 0x00
-	mov al, 0x13
+	mov al, 0x0d
 	int 0x10
 
-	mov dx, [CMAIN]
-	call print_hex
 
-	jmp 0x7e00
+	.A20:
+		mov bx, A20
+		call print
+		in al, 0xee
+		call check_a20
+		sti
+		mov dx, ax
+		cmp dx, 0x1
+		jne .disabled
 
-	jmp halt
+	.enabled:
+		mov bx, OK
+		call print
+		jmp .main
+
+	.disabled:
+		mov bx, BAD
+		call print
+
+	.main:
+		mov bx, string
+		call print
+		jmp halt
 
 check_a20:
     pushf
@@ -100,4 +106,13 @@ dw 0xaa55
 
 newline:
 	db "\n", 0
+string:
+	db "Hello World\n", 0
+
+A20:
+	db "Checking A20 line...", 0
+OK:
+	db "OK\n", 0
+BAD:
+	db "BAD\n", 0
 
