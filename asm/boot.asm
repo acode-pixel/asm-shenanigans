@@ -103,7 +103,6 @@ halt:
 times 510-($-$$) db 0
 dw 0xaa55
 
-
 newline:
 	db "\n", 0
 string:
@@ -115,4 +114,9 @@ OK:
 	db "OK\n", 0
 BAD:
 	db "BAD\n", 0
+
+times (512*938) db 0
+
+
+
 

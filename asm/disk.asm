@@ -2,6 +2,7 @@ disk_read:
 	; "Uses DX register"
 	; "DH = sectors to read, DL = drive number"
 	; "store contents at buffer [ES:BX]"
+	; "NOTE: Overhaul disk function to increase read capacity"
 
 	pusha
 
