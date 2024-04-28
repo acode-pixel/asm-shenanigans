@@ -1,90 +1,97 @@
+;
+; Print function
+; push text to stack then other args to stack
+;
 print:
-	; "print character in AL into the creen"
-	; "needs AH to be 0E to function"
-	; "takes BX as a pointer to the string"
+    push bp
+    mov bp, sp
+    pusha
 
-	pusha
+    mov ah, 0x0e
+    mov si, [bp+4]
 
-	mov ah, 0x0e
+    .loop:
+        lodsb
+        cmp al, "\"
+        je .var_parser
+        cmp al, 0
+        je .exit
+        int 10h
+        jmp .loop
 
-	cmp bx, 0
-	je .nostr_error
-	
-	.loop:
-		mov dx, [bx]
-		cmp dl, 0
-		je .stop
-		cmp dl, 0x5c
-		je .special_chars
-		mov al, dl
-		push bx
-		mov bx, 0x0007 ; "adds color if set to graphics mode (13h)"
-		int 0x10
-		pop bx
-		inc bx
-		jmp .loop
+    .var_parser:
+        lodsb
+        cmp al, "n"
+        je .print_nl
+        cmp al, "x"
+        je .print_hex
+        jmp .end
 
-	.nostr_error:
-		mov bx, nostring
-		jmp print
+        .print_nl:
+            push newline
+            call print
+            pop dx
+            jmp .end
 
-	.special_chars:
-		cmp dh, 0x6e
-		je .print_nl
-		
-		mov al, dl
-		int 0x10
-		inc bx
-		jmp .loop
+        .print_hex:
+            mov dx, [bp+6]
+            push dx
+            call print_hex
+            pop dx
+            jmp .end
 
-	.print_nl:
-		mov al, 0x0a
-		int 0x10
-		mov al, 0x0d
-		int 0x10
-		add bx, 2
-		jmp .loop
+        .end:
+            jmp .loop
 
-	.stop:
-		popa
-		ret
+    .exit:
+        popa
+        pop bp
+        ret
 
 print_hex:
-	; "Store hex at DX"
-	; "CALLS print to print out hex representation"
-	; "Use CX as pointer to which bit is used"
+    push bp
+    mov bp, sp
+    pusha
 
-	pusha
-	mov cx, 0
+    times 2 push 0xffff ; make space for hex
 
-	.loop:
-		mov ax, dx
-		and ax, 0x000f ; "bit mask last bit"
-		add al, 0x30
-		cmp al, 0x39
-		jle .store_bits
-		add al, 7 ; "convert to alphabetic"
+    mov dx, [bp+4]
+    mov cx, 4
 
-	.store_bits:
-		mov bx, HEX_OUT + 5
-		sub bx, cx
-		mov [bx], al
-		inc cx
-		ror dx, 4 ; "shift DX by four bits to the right"
-		cmp cx, 4
-		jge .print
-		jmp .loop
 
-	.print:
-		mov bx, HEX_OUT
-		call print
+    .l1:
+        mov ax, dx
+        and ax, 000fh
+        add al, 30h
+        cmp al, 39h
+        jle .end
+        add al, 10h
+        sub al, 9h
 
-	.stop:
-		popa
-		ret
+        .end:
+            mov bx, sp
+            sub cx, 1
+            add bx, cx
+            add cx, 1
+            mov [bx], al
+            ror dx, 4
+            loop .l1
 
-HEX_OUT:
-	db "0x0000", 0
+    mov si, sp
+    mov cx, 4
+    mov di, hex_buffer+2
+    rep movsb
 
-nostring:
-	db "\nno string pointer detected", 0
+    ; print hex
+    push hex_buffer
+    call print
+
+    ; clean stack
+    times 3 pop dx
+
+    popa
+    pop bp
+    ret
+
+newline: dw 0x0d0a, 0
+hex_buffer db "0x0000", 0

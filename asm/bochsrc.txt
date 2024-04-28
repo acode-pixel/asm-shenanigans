@@ -1,0 +1,3 @@
+floppya: 160k=boot, status=inserted
+display_library: sdl2
+boot: floppy
